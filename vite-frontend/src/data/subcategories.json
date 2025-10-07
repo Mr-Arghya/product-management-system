@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "Smartphones",
+    "description": "Mobile phones and accessories",
+    "categoryId": 1
+  },
+  {
+    "id": 2,
+    "name": "Laptops",
+    "description": "Portable computers",
+    "categoryId": 1
+  },
+  {
+    "id": 3,
+    "name": "Men's Clothing",
+    "description": "Clothing for men",
+    "categoryId": 2
+  },
+  {
+    "id": 4,
+    "name": "Women's Clothing",
+    "description": "Clothing for women",
+    "categoryId": 2
+  },
+  {
+    "id": 5,
+    "name": "Fiction",
+    "description": "Fiction books",
+    "categoryId": 3
+  },
+  {
+    "id": 6,
+    "name": "Non-Fiction",
+    "description": "Non-fiction books",
+    "categoryId": 3
+  }
+]

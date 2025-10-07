@@ -1,0 +1,48 @@
+[
+  {
+    "id": 1,
+    "name": "iPhone 15",
+    "description": "Latest Apple smartphone",
+    "price": 999,
+    "categoryId": 1,
+    "subcategoryId": 1,
+    "images": [
+      "https://via.placeholder.com/300x300?text=iPhone+15+1",
+      "https://via.placeholder.com/300x300?text=iPhone+15+2"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "MacBook Pro",
+    "description": "High-performance laptop",
+    "price": 1999,
+    "categoryId": 1,
+    "subcategoryId": 2,
+    "images": [
+      "https://via.placeholder.com/300x300?text=MacBook+Pro+1",
+      "https://via.placeholder.com/300x300?text=MacBook+Pro+2"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "T-Shirt",
+    "description": "Cotton t-shirt",
+    "price": 19.99,
+    "categoryId": 2,
+    "subcategoryId": 3,
+    "images": [
+      "https://via.placeholder.com/300x300?text=T-Shirt+1"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "The Great Gatsby",
+    "description": "Classic novel by F. Scott Fitzgerald",
+    "price": 12.99,
+    "categoryId": 3,
+    "subcategoryId": 5,
+    "images": [
+      "https://via.placeholder.com/300x300?text=Great+Gatsby+1"
+    ]
+  }
+]
