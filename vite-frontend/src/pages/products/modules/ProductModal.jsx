@@ -35,8 +35,6 @@ const ProductModal = ({
 
   const [categories, setCategories] = useState([]);
 
-  const [subcategories, setSubcategories] = useState([]);
-
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
     queryFn: fetchCategories,
@@ -286,11 +284,11 @@ const ProductModal = ({
                 >
                   <option value="">
                     {selectedCategoryId
-                      ? "Select subcategory"
+                      ? "Select sub-category"
                       : "Select category first"}
                   </option>
                   {SelectedCategory?.sub_categories?.map((s) => (
-                    <option key={s.id} value={s.id}>
+                    <option key={s._id} value={s._id}>
                       {s.name}
                     </option>
                   ))}

@@ -6,8 +6,6 @@ import debounce from "../../utils/debounce";
 import SkeletonLoader from "../../components/SkeletonLoader";
 import DeleteModal from "../../components/DeleteModal";
 import ProductModal from "./modules/ProductModal";
-import EditProductModal from "./modules/EditProductModal";
-import ViewProductModal from "./modules/ViewProductModal";
 import ProductCard from "./ProductCard";
 import SearchBar from "./SearchBar";
 import CategoryFilter from "./CategoryFilter";

@@ -1,4 +1,5 @@
 const { Product } = require("../models");
+const { ProductAGGREGATION } = require("./aggregation");
 
 const ProductService = {
   async createProduct(productData) {
@@ -8,24 +9,7 @@ const ProductService = {
 
   async getAllProducts({ filter = {}, sort = { createdAt: -1 } }) {
     const products = await Product.aggregate([
-      {
-        $lookup: {
-          from: "categories",
-          localField: "categories",
-          foreignField: "_id",
-          pipeline: [
-            {
-              $lookup: {
-                from: "sub_categories",
-                localField: "sub_category_id",
-                foreignField: "_id",
-                as: "SubCategory",
-              },
-            },
-          ],
-          as: "Category",
-        },
-      },
+      ...ProductAGGREGATION,
       {
         $match: filter,
       },

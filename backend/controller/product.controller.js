@@ -1,7 +1,7 @@
 const { Types } = require("mongoose");
 const { CommonLib } = require("../lib");
 const { sendResponse } = require("../lib/response.lib");
-const { ProductService } = require("../services");
+const { ProductService, GenerateSearchService } = require("../services");
 
 const ProductController = {
   async createProduct(req, res) {
@@ -30,6 +30,13 @@ const ProductController = {
       const size = query.size ? parseInt(query.size) : 10;
       const response = {};
       const index = page ? (page - 1) * size : 0;
+      if (query.search_value) {
+        const searchObject = await GenerateSearchService({
+          collection: "Product",
+          search_value: query.search_value,
+        });
+        Object.assign(filter, searchObject);
+      }
       const products = await ProductService.getAllProducts({
         filter,
         sort: { createdAt: -1 },
