@@ -1,5 +1,3 @@
-# TODO: Add Logout Functionality in Sidebar
-
-- [ ] Update `src/hooks/useAuth.jsx`: Modify the `logout` function to clear both user and token from state and localStorage.
-- [ ] Update `src/components/Sidebar.jsx`: Add a logout button in the footer div (above the copyright), with onClick handler that calls `logout()` and navigates to `/login`.
-- [ ] Test the logout functionality to ensure it clears data and redirects properly.
+- [x] Create a RedirectToDashboard component that navigates to /dashboard if authenticated
+- [x] Update App.jsx to use RedirectToDashboard for the root route "/"
+- [ ] Test the behavior on reload and reopen

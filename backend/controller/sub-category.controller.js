@@ -33,7 +33,7 @@ const CategoryController = {
           limit: size,
           index,
         });
-      response.pagination = CommonLib.getPagination(count, page, size);
+      response.pagination = CommonLib.getPagination(page, size, count);
       response.sub_categories = subCategories;
       return sendResponse(res, 200, "Success", response, false);
     } catch (error) {

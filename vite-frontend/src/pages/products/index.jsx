@@ -17,25 +17,26 @@ const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
-  const [sortField, setSortField] = useState("created_at");
-  const [sortDirection, setSortDirection] = useState("desc");
   const [products, setProducts] = useState([]);
+
   const [pageData, setPageData] = useState({
     currentPage: 1,
-    totalPages: Math.ceil(products?.length / 10),
-    showing: 10,
+    totalPages: 0,
+    showing: 4,
     total: 0,
   });
+
+  const [categories, setCategories] = useState(null);
+  const [subCategories, setSubCategories] = useState(null);
 
   const { createProducts, deleteProducts, fetchProducts, updateProducts } =
     useProducts({
       filters: {
         search_value: searchTerm,
-        category: selectedCategory,
-        subcategory: selectedSubcategory,
+        categories: selectedCategory,
+        sub_category_id: selectedSubcategory,
       },
-      pagination: { page: pageData.currentPage, limit: 10 },
-      sort: { field: sortField, direction: sortDirection },
+      pagination: { page: pageData.currentPage, limit: pageData.showing },
     });
 
   const productsQuery = useQuery({
@@ -44,7 +45,7 @@ const ProductsPage = () => {
       searchTerm,
       selectedCategory,
       selectedSubcategory,
-      pageData.currentPage,
+      pageData.showing,
     ],
     queryFn: fetchProducts,
     keepPreviousData: true,
@@ -57,25 +58,37 @@ const ProductsPage = () => {
       setPageData((prev) => ({
         ...prev,
         total: response.data.pagination.total,
-        totalPages: response.data.pagination.total,
+        totalPages: Math.ceil(response.data.pagination.total / prev.showing),
         currentPage: response.data.pagination.currentPage,
-        showing: response.data.pagination.showing,
       }));
     }
   }, [productsQuery.data, productsQuery.isLoading]);
 
-  const { data: categories } = useCategories();
-  const { data: subcategories } = useSubcategories();
+  const handleLoadMore = () => {
+    setPageData((prev) => ({
+      ...prev,
+      showing: prev.showing + 4,
+    }));
+  };
+
+  const handleShowLess = () => {
+    setPageData((prev) => ({
+      ...prev,
+      showing: 4,
+    }));
+  };
 
   const createProduct = useMutation({
     mutationFn: (vals) => createProducts(vals),
     onSuccess: () => productsQuery.refetch(),
   });
+
   const updateProduct = useMutation({
     mutationFn: ({ id, productData }) =>
       updateProducts({ id, productsData: productData }),
     onSuccess: () => productsQuery.refetch(),
   });
+
   const deleteProduct = useMutation({
     mutationFn: (id) => deleteProducts(id),
     onSuccess: () => productsQuery.refetch(),
@@ -96,7 +109,10 @@ const ProductsPage = () => {
 
   const handleCategoryChange = (categoryId) => {
     setSelectedCategory(categoryId);
-    setSelectedSubcategory(""); // Reset subcategory when category changes
+    const subcategories = categories?.find(
+      (category) => category._id === categoryId
+    )?.sub_categories;
+    setSubCategories(subcategories);
   };
 
   const handleSubcategoryChange = (subcategoryId) => {
@@ -108,6 +124,8 @@ const ProductsPage = () => {
     setCurrentProduct(product);
     setIsModalOpen(true);
   };
+
+  const { fetchCategories } = useCategories();
 
   const handleCreate = (data) => {
     createProduct.mutate(data, {
@@ -130,9 +148,16 @@ const ProductsPage = () => {
     });
   };
 
-  const filteredSubcategories = subcategories?.filter(
-    (sub) => !selectedCategory || sub.category_id === selectedCategory
-  );
+  const categoriesQuery = useQuery({
+    queryKey: ["categories"],
+    queryFn: fetchCategories,
+  });
+
+  useEffect(() => {
+    if (!categoriesQuery.isLoading && categoriesQuery.data) {
+      setCategories(categoriesQuery?.data?.data?.categories);
+    }
+  }, [categoriesQuery.isLoading]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -140,7 +165,7 @@ const ProductsPage = () => {
         <h1 className="text-3xl font-bold text-gray-800">Products</h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+          className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
         >
           Add Product
         </button>
@@ -155,7 +180,7 @@ const ProductsPage = () => {
             onCategoryChange={handleCategoryChange}
           />
           <SubcategoryFilter
-            subcategories={filteredSubcategories}
+            subcategories={subCategories}
             selectedSubcategory={selectedSubcategory}
             onSubcategoryChange={handleSubcategoryChange}
             disabled={!selectedCategory}
@@ -180,19 +205,40 @@ const ProductsPage = () => {
           ))}
         </ProductList>
       ) : (
-        <ProductList>
-          {products?.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              categories={categories}
-              subcategories={subcategories}
-              onView={() => handleMode("view", product)}
-              onEdit={() => handleMode("edit", product)}
-              onDelete={() => setCurrentProduct(product)}
-            />
-          ))}
-        </ProductList>
+        <div className="flex flex-col items-center">
+          <ProductList>
+            {products?.map((product) => (
+              <ProductCard
+                key={product._id}
+                product={product}
+                onView={() => handleMode("view", product)}
+                onEdit={() => handleMode("edit", product)}
+                onDelete={() => setCurrentProduct(product)}
+              />
+            ))}
+          </ProductList>
+          {products?.length === 0 ? (
+            <p className="mt-4 text-gray-600">No products found.</p>
+          ) : (
+            <>
+              <div className="mt-4 text-sm text-gray-600">
+                Showing {products?.length} of {pageData.total} products
+              </div>
+
+              <button
+                className="cursor-pointer mt-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-full transition-all 
+            duration-200 border border-transparent hover:border-blue-400 shadow-md hover:shadow-lg font-medium"
+                onClick={() => {
+                  pageData.showing >= pageData.total
+                    ? handleShowLess()
+                    : handleLoadMore();
+                }}
+              >
+                {pageData.showing >= pageData.total ? "Show Less" : "Load More"}
+              </button>
+            </>
+          )}
+        </div>
       )}
 
       <ProductModal
@@ -200,14 +246,14 @@ const ProductsPage = () => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={modalMode === "create" ? handleCreate : handleUpdate}
         categories={categories}
-        subcategories={subcategories}
+        subcategories={subCategories}
         isLoading={createProduct.isPending}
         mode={modalMode}
         product={currentProduct}
       />
 
       <DeleteModal
-        isOpen={!!modalMode === "delete"}
+        isOpen={!!currentProduct && modalMode === "delete"} // Fixed this condition
         itemName={currentProduct?.name}
         onConfirm={handleDelete}
         onCancel={() => setCurrentProduct(null)}

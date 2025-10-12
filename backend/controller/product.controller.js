@@ -30,6 +30,8 @@ const ProductController = {
       const size = query.size ? parseInt(query.size) : 10;
       const response = {};
       const index = page ? (page - 1) * size : 0;
+      const queryFilter = req.filter ? req.filter : {};
+      Object.assign(filter, queryFilter);
       if (query.search_value) {
         const searchObject = await GenerateSearchService({
           collection: "Product",
@@ -37,6 +39,7 @@ const ProductController = {
         });
         Object.assign(filter, searchObject);
       }
+      console.log(filter, "<-------FILTER");
       const products = await ProductService.getAllProducts({
         filter,
         sort: { createdAt: -1 },
@@ -52,6 +55,7 @@ const ProductController = {
         false
       );
     } catch (error) {
+      console.log(error, "<-------ERR");
       return sendResponse(res, 500, { message: error.message }, true);
     }
   },

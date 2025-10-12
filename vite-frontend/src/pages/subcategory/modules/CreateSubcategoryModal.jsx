@@ -22,7 +22,7 @@ const CreateSubcategoryModal = ({
   const nameRef = useRef(null);
 
   const onSubmitForm = (data) => {
-    onSubmit({ ...data, category_id: data.categoryId });
+    onSubmit({ ...data, category_id: data.category_id });
     reset();
     handleClose();
   };
@@ -55,6 +55,15 @@ const CreateSubcategoryModal = ({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [isOpen]);
+
+  useEffect(() => {
+    console.log(mode, "<------MODAL MODE");
+    reset({
+      name: subCategory?.name,
+      description: subCategory?.description,
+      category_id: subCategory?.category_id,
+    });
+  }, [subCategory]);
 
   const handleClose = () => {
     reset();
@@ -117,7 +126,9 @@ const CreateSubcategoryModal = ({
                 placeholder="Enter subcategory name"
               />
               {errors.name && (
-                <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -140,9 +151,11 @@ const CreateSubcategoryModal = ({
                 Category
               </label>
               <select
-                {...register("categoryId", { required: "Category is required" })}
-                className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none ${
-                  errors.categoryId ? "border-red-400" : "border-gray-200"
+                {...register("category_id", {
+                  required: "Category is required",
+                })}
+                className={`cursor-pointer block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none ${
+                  errors.category_id ? "border-red-400" : "border-gray-200"
                 }`}
               >
                 <option value="">Select a category</option>
@@ -152,31 +165,41 @@ const CreateSubcategoryModal = ({
                   </option>
                 ))}
               </select>
-              {errors.categoryId && (
+              {errors.category_id && (
                 <p className="mt-1 text-xs text-red-600">
-                  {errors.categoryId.message}
+                  {errors.category_id.message}
                 </p>
               )}
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end space-x-3 pt-2">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={isLoading}
-                className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium shadow-md hover:opacity-95 transition disabled:opacity-50"
-              >
-                {isLoading ? "Creating..." : "Create"}
-              </button>
-            </div>
+            {mode !== "view" && (
+              <div className="flex justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  disabled={isLoading}
+                  className="cursor-pointer px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="cursor-pointer px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium shadow-md hover:opacity-95 transition disabled:opacity-50"
+                >
+                  {mode === "edit"
+                    ? isLoading
+                      ? "Updating..."
+                      : "Update"
+                    : mode === "create"
+                    ? isLoading
+                      ? "Creating..."
+                      : "Create"
+                    : "Create"}
+                </button>
+              </div>
+            )}
           </form>
         </div>
       </div>

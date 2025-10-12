@@ -13,18 +13,21 @@ export function useProducts(options = {}) {
   const fetchProducts = async () => {
     const queryParams = new URLSearchParams();
     queryParams.append("page", pagination.page);
-    queryParams.append("limit", pagination.limit);
+    queryParams.append("size", pagination.limit);
     queryParams.append("sortField", sort.field);
     queryParams.append("sortDirection", sort.direction);
+    queryParams.append("search_value", filters.search_value || "");
+    delete filters.search_value;
 
-    for (const [key, value] of Object.entries(filters)) {
-      if (value !== undefined && value !== null && value !== "") {
-        queryParams.append(key, value);
-      }
-    }
+    // for (const [key, value] of Object.entries(filters)) {
+    //   if (value !== undefined && value !== null && value !== "") {
+    //     queryParams.append(key, value);
+    //   }
+    // }
+    // console.log("Fetching products with params:", queryParams.toString());
 
     const response = await apiRequest.get(
-      `/products/?${queryParams.toString()}`
+      `/products/?${queryParams.toString()}&filter=${JSON.stringify(filters)}`
     );
     return response.data;
   };
@@ -55,10 +58,18 @@ export function useProducts(options = {}) {
     return id;
   };
 
+  const fetchProductsForLanding = async () => {
+    const response = await apiRequest.get(`/products/landing`, {
+      skipAuth: true,
+    });
+    return response.data;
+  };
+
   return {
     fetchProducts,
     createProducts,
     updateProducts,
     deleteProducts,
+    fetchProductsForLanding
   };
 }

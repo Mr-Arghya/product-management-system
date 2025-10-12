@@ -13,7 +13,7 @@ export function useCategories(options = {}) {
   const fetchCategories = async () => {
     const queryParams = new URLSearchParams();
     queryParams.append("page", pagination.page);
-    queryParams.append("limit", pagination.limit);
+    queryParams.append("size", pagination.limit);
     queryParams.append("sortField", sort.field);
     queryParams.append("sortDirection", sort.direction);
 
@@ -38,8 +38,8 @@ export function useCategories(options = {}) {
     return response;
   };
 
-  const updateCategories = async (categoriesData) => {
-    const response = await apiRequest(`/category`, {
+  const updateCategories = async ({id, categoriesData}) => {
+    const response = await apiRequest(`/category/${id}`, {
       method: "PUT",
       data: categoriesData,
     });

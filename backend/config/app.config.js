@@ -51,6 +51,7 @@ const AppConfig = {
     { path: "/user/login/?", method: "POST" },
     { path: "/user/register/?", method: "POST" },
     { path: "/claudinary-upload/upload/?", method: "POST" },
+    { path: "/products/landing/?", method: "GET" },
   ],
 };
 

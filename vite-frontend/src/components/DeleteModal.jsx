@@ -97,7 +97,7 @@ const DeleteModal = ({
               ref={cancelRef}
               onClick={onCancel}
               type="button"
-              className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-300 transition"
+              className="cursor-pointer px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-300 transition"
               disabled={isLoading || internalLoading}
             >
               Cancel
@@ -106,7 +106,7 @@ const DeleteModal = ({
             <button
               onClick={handleConfirm}
               type="button"
-              className={`px-4 py-2 rounded-lg inline-flex items-center gap-2 font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-1 transition
+              className={`cursor-pointer px-4 py-2 rounded-lg inline-flex items-center gap-2 font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-1 transition
                 ${isLoading || internalLoading ? 'bg-red-400 cursor-not-allowed opacity-80' : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 shadow-md'}`}
               disabled={isLoading || internalLoading}
             >

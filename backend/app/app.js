@@ -27,7 +27,7 @@ app.get("/", (req, res) => {
 });
 app.use(
   "/api",
-  [AuthMiddleware.verifyAuth, AuthMiddleware.verifySession, Formatter.formatPageAndSize],
+  [AuthMiddleware.verifyAuth, AuthMiddleware.verifySession,Formatter.formatFilter, Formatter.formatPageAndSize],
   v1Routes
 );
 

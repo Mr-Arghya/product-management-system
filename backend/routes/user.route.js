@@ -11,6 +11,7 @@ Router.post(
 );
 Router.post("/login", UserController.login);
 Router.post("/upload-file", uploadFile);
+Router.get("/check", UserController.authCheck);
 
 
 module.exports = Router;

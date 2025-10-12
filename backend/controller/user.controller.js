@@ -83,6 +83,14 @@ const UserController = {
       return sendResponse(res, 500, e.message, {}, true);
     }
   },
+
+  async authCheck(req, res) {
+    try {
+      return sendResponse(res, 200, "Authorized", {}, false);
+    } catch (e) {
+      return sendResponse(res, 500, e.message, {}, true);
+    }
+  },
 };
 
 module.exports = UserController;

@@ -13,7 +13,7 @@ export function useSubcategories(options = {}) {
   const fetchSubcategories = async () => {
     const queryParams = new URLSearchParams();
     queryParams.append("page", pagination.page);
-    queryParams.append("limit", pagination.limit);
+    queryParams.append("size", pagination.limit);
     queryParams.append("sortField", sort.field);
     queryParams.append("sortDirection", sort.direction);
 

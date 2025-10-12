@@ -1,18 +1,19 @@
 import React from "react";
-import { Routes, Route, useLocation, Router } from "react-router-dom";
+import { Routes, Route, useLocation, Router, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
-import RequireAuth from "./components/RequireAuth";
+import { PublicRoute, RequireAuth } from "./components/RequireAuth";
 import CategoryPage from "./pages/category";
 import SubcategoryPage from "./pages/subcategory";
 import ProductsPage from "./pages/products";
 import { LoginPage, VerifyOTPPage } from "./pages/auth";
 import { AuthProvider } from "./hooks/useAuth.jsx";
 import { Flip, ToastContainer } from "react-toastify";
+import LandingPage from "./pages/landingPage/index.jsx";
 
 function App() {
   const location = useLocation();
 
-  const authPaths = ["/login", "/verify-otp"];
+  const authPaths = ["/login", "/verify-otp", "/"];
   const hideSidebar = authPaths.includes(location.pathname);
 
   return (
@@ -34,6 +35,14 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/verify-otp" element={<VerifyOTPPage />} />
+            <Route
+              path="/"
+              element={
+                <PublicRoute  >
+                  <LandingPage />
+                </PublicRoute>
+              }
+            />
             <Route
               path="/categories"
               element={
@@ -59,7 +68,7 @@ function App() {
               }
             />
             <Route
-              path="/"
+              path="/dashboard"
               element={
                 <RequireAuth>
                   <div className="text-center mt-10">
@@ -70,6 +79,7 @@ function App() {
                 </RequireAuth>
               }
             />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>

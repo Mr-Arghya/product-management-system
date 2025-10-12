@@ -25,14 +25,13 @@ const ProductModal = ({
       name: "",
       description: "",
       price: "",
-      category_id: "",
+      categories: "",
       sub_category_id: "",
-      images: [],
+      image: [],
     },
   });
 
   const { fetchCategories } = useCategories();
-
   const [categories, setCategories] = useState([]);
 
   const categoriesQuery = useQuery({
@@ -48,30 +47,60 @@ const ProductModal = ({
     }
   }, [categoriesQuery.data, categoriesQuery.isLoading]);
 
+  // Fixed: Better product data population for view/edit mode
   useEffect(() => {
-    if (product) {
+    if (product && categories.length > 0) {
+      // Find the actual category and subcategory IDs
+      let categoryId = product.category || product.categories;
+      let subcategoryId = product.subcategory || product.sub_category_id;
+
+      // If we have Category/SubCategory objects instead of IDs, extract the IDs
+      if (typeof product.Category === "object" && product.Category?._id) {
+        categoryId = product.Category._id;
+      }
+      if (typeof product.SubCategory === "object" && product.SubCategory?._id) {
+        subcategoryId = product.SubCategory._id;
+      }
+
       reset({
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        category_id: product.category_id,
-        sub_category_id: product.sub_category_id,
-        images: product.image ? product.image : [],
+        name: product.name || "",
+        description: product.description || "",
+        price: product.price || "",
+        categories: categoryId || "",
+        sub_category_id: subcategoryId || "",
+        image: product.image ? product.image : [],
+      });
+    } else if (product && categories.length === 0) {
+      // If categories haven't loaded yet, populate without category data
+      reset({
+        name: product.name || "",
+        description: product.description || "",
+        price: product.price || "",
+        categories: "",
+        sub_category_id: "",
+        image: product.image ? product.image : [],
       });
     }
-  }, [product, reset]);
+  }, [product, categories, reset]);
 
   const { uploadFile } = useUpload();
   const overlayRef = useRef(null);
   const nameRef = useRef(null);
   const [uploading, setUploading] = useState(false);
 
-  const selectedCategoryId = watch("category_id");
-  const localImages = watch("images") || [];
+  const selectedCategoryId = watch("categories");
+  const localImages = watch("image") || [];
 
-  const SelectedCategory = categories?.find(
-    (sub) => String(sub._id) === String(selectedCategoryId)
+  const selectedCategory = categories?.find(
+    (cat) => String(cat._id) === String(selectedCategoryId)
   );
+
+  // Clear subcategory when category changes (only in create/edit mode)
+  useEffect(() => {
+    if (selectedCategoryId && mode !== "view") {
+      setValue("sub_category_id", "");
+    }
+  }, [selectedCategoryId, setValue, mode]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -104,14 +133,12 @@ const ProductModal = ({
 
       for (const file of files) {
         const res = await uploadFile(file);
-        console.log(res, "<----res from upload");
         const uploadedPath = res?.data?.files?.file?.path;
         if (uploadedPath) uploadedUrls.push(uploadedPath);
       }
 
       const newUrls = [...localImages, ...uploadedUrls];
-      console.log(newUrls, "<----newUrls");
-      setValue("images", newUrls);
+      setValue("image", newUrls);
     } catch (err) {
       console.error("File upload failed:", err);
     } finally {
@@ -121,20 +148,45 @@ const ProductModal = ({
 
   const handleRemoveImage = (url) => {
     const updated = localImages.filter((img) => img !== url);
-    setValue("images", updated);
+    setValue("image", updated);
   };
 
   const onSubmitForm = (data) => {
     const productData = {
       ...data,
-      category_id: data.category_id,
+      categories: data.categories,
       sub_category_id: data.sub_category_id,
       price: parseFloat(data.price),
-      images: data.images || [],
+      image: data.image || [],
     };
     onSubmit && onSubmit(productData);
     reset();
     handleClose();
+  };
+
+  // Get display names for view mode
+  const getCategoryDisplayName = () => {
+    if (mode === "view" && product) {
+      // Try multiple ways to get the category name
+      if (product.Category?.name) return product.Category.name;
+      if (selectedCategory?.name) return selectedCategory.name;
+      return "Unknown Category";
+    }
+    return "";
+  };
+
+  const getSubcategoryDisplayName = () => {
+    if (mode === "view" && product) {
+      if (product.SubCategory?.name) return product.SubCategory.name;
+      const subcategoryId = product.subcategory || product.sub_category_id;
+      const subcategory = selectedCategory?.sub_categories?.find(
+        (sub) => String(sub._id) === String(subcategoryId)
+      );
+      if (subcategory?.name) return subcategory.name;
+
+      return "Unknown Subcategory";
+    }
+    return "";
   };
 
   if (!isOpen) return null;
@@ -153,7 +205,7 @@ const ProductModal = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <h3 className="text-lg font-semibold text-gray-800">
-            {mode === "view" ? "View " : mode === "edit" ? "Edit" : "Create "}{" "}
+            {mode === "view" ? "View" : mode === "edit" ? "Edit" : "Create"}{" "}
             Product
           </h3>
           <button
@@ -177,14 +229,18 @@ const ProductModal = ({
                 id="name"
                 ref={nameRef}
                 {...register("name", {
-                  required: "Name is required",
-                  minLength: { value: 3, message: "At least 3 characters" },
+                  required: mode !== "view" ? "Name is required" : false,
+                  minLength:
+                    mode !== "view"
+                      ? { value: 3, message: "At least 3 characters" }
+                      : undefined,
                 })}
                 className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none ${
                   errors.name ? "border-red-400" : "border-gray-200"
-                }`}
+                } ${mode === "view" ? "bg-gray-50" : ""}`}
                 placeholder="Product name"
                 disabled={mode === "view"}
+                readOnly={mode === "view"}
               />
               {errors.name && (
                 <p className="mt-1 text-xs text-red-600">
@@ -200,14 +256,15 @@ const ProductModal = ({
               </label>
               <textarea
                 {...register("description", {
-                  required: "Description is required",
+                  required: mode !== "view" ? "Description is required" : false,
                 })}
                 rows="3"
                 className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none ${
                   errors.description ? "border-red-400" : "border-gray-200"
-                }`}
+                } ${mode === "view" ? "bg-gray-50" : ""}`}
                 placeholder="Short description"
                 disabled={mode === "view"}
+                readOnly={mode === "view"}
               />
               {errors.description && (
                 <p className="mt-1 text-xs text-red-600">
@@ -225,16 +282,20 @@ const ProductModal = ({
                 </label>
                 <input
                   {...register("price", {
-                    required: "Price is required",
-                    min: { value: 0, message: "Must be >= 0" },
+                    required: mode !== "view" ? "Price is required" : false,
+                    min:
+                      mode !== "view"
+                        ? { value: 0, message: "Must be >= 0" }
+                        : undefined,
                   })}
                   type="number"
                   step="0.01"
                   className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none ${
                     errors.price ? "border-red-400" : "border-gray-200"
-                  }`}
+                  } ${mode === "view" ? "bg-gray-50" : ""}`}
                   placeholder="0.00"
                   disabled={mode === "view"}
+                  readOnly={mode === "view"}
                 />
                 {errors.price && (
                   <p className="mt-1 text-xs text-red-600">
@@ -248,22 +309,32 @@ const ProductModal = ({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Category
                 </label>
-                <select
-                  {...register("category_id", {
-                    required: "Category required",
-                  })}
-                  className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none ${
-                    errors.category_id ? "border-red-400" : "border-gray-200"
-                  }`}
-                  disabled={mode === "view"}
-                >
-                  <option value="">Select category</option>
-                  {categories.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                {mode === "view" ? (
+                  <div className="block w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
+                    {getCategoryDisplayName()}
+                  </div>
+                ) : (
+                  <select
+                    {...register("categories", {
+                      required: "Category required",
+                    })}
+                    className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none ${
+                      errors.categories ? "border-red-400" : "border-gray-200"
+                    }`}
+                  >
+                    <option value="">Select category</option>
+                    {categories.map((c) => (
+                      <option key={c._id} value={c._id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {errors.categories && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.categories.message}
+                  </p>
+                )}
               </div>
 
               {/* Subcategory */}
@@ -271,28 +342,42 @@ const ProductModal = ({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Subcategory
                 </label>
-                <select
-                  {...register("sub_category_id", {
-                    required: "Subcategory required",
-                  })}
-                  disabled={!selectedCategoryId || mode === "view"}
-                  className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none ${
-                    errors.sub_category_id
-                      ? "border-red-400"
-                      : "border-gray-200"
-                  }`}
-                >
-                  <option value="">
-                    {selectedCategoryId
-                      ? "Select sub-category"
-                      : "Select category first"}
-                  </option>
-                  {SelectedCategory?.sub_categories?.map((s) => (
-                    <option key={s._id} value={s._id}>
-                      {s.name}
+                {mode === "view" ? (
+                  <div className="block w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
+                    {getSubcategoryDisplayName()}
+                  </div>
+                ) : (
+                  <select
+                    {...register("sub_category_id", {
+                      required: "Subcategory required",
+                    })}
+                    disabled={!selectedCategoryId}
+                    className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none ${
+                      errors.sub_category_id
+                        ? "border-red-400"
+                        : "border-gray-200"
+                    } ${!selectedCategoryId ? "bg-gray-50" : ""}`}
+                  >
+                    <option value="">
+                      {!selectedCategoryId
+                        ? "Select category first"
+                        : selectedCategory?.sub_categories?.length > 0
+                        ? "Select sub-category"
+                        : "No subcategories available"}
                     </option>
-                  ))}
-                </select>
+                    {selectedCategory?.sub_categories?.length > 0 &&
+                      selectedCategory.sub_categories.map((subcategory) => (
+                        <option key={subcategory._id} value={subcategory._id}>
+                          {subcategory.name}
+                        </option>
+                      ))}
+                  </select>
+                )}
+                {errors.sub_category_id && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.sub_category_id.message}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -301,13 +386,16 @@ const ProductModal = ({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Product Images
               </label>
-              <input
-                type="file"
-                multiple
-                onChange={handleFileUpload}
-                disabled={uploading || mode === "view"}
-                className="block w-full text-sm text-gray-600"
-              />
+              {mode !== "view" && (
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              )}
               {uploading && (
                 <p className="text-xs text-blue-500 mt-1">Uploading...</p>
               )}
@@ -316,7 +404,7 @@ const ProductModal = ({
               <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                 {localImages.length === 0 && !uploading && (
                   <p className="text-xs text-gray-400 col-span-full">
-                    No images uploaded yet.
+                    No images {mode === "view" ? "available" : "uploaded yet"}.
                   </p>
                 )}
                 {localImages.map((image, idx) => (
@@ -333,7 +421,7 @@ const ProductModal = ({
                       <button
                         type="button"
                         onClick={() => handleRemoveImage(image)}
-                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                        className="cursor-pointer absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
                       >
                         <X size={14} />
                       </button>
@@ -350,16 +438,20 @@ const ProductModal = ({
                   type="button"
                   onClick={handleClose}
                   disabled={isLoading || uploading}
-                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition disabled:opacity-50"
+                  className="cursor-pointer px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading || uploading}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium shadow-md hover:opacity-95 transition disabled:opacity-50"
+                  className="cursor-pointer px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium shadow-md hover:opacity-95 transition disabled:opacity-50"
                 >
-                  {isLoading || uploading ? "Processing..." : "Create Product"}
+                  {isLoading || uploading
+                    ? "Processing..."
+                    : mode === "edit"
+                    ? "Update Product"
+                    : "Create Product"}
                 </button>
               </div>
             )}
@@ -367,7 +459,9 @@ const ProductModal = ({
         </div>
 
         <div className="px-6 py-3 border-t text-xs text-gray-500">
-          Tip: You can upload multiple product images.
+          {mode === "view"
+            ? "Product details are displayed in read-only mode."
+            : "Tip: You can upload multiple product images."}
         </div>
       </div>
     </div>

@@ -61,9 +61,6 @@ export function fakeVerifyOTP(otpToken, code) {
   });
 }
 
-/* -------------------------
-   LoginPage
-   ------------------------- */
 export const LoginPage = () => {
   const {
     register,
@@ -71,7 +68,7 @@ export const LoginPage = () => {
     formState: { errors },
   } = useForm();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user, token, loading } = useAuth();
   const [error, setError] = useState(null);
 
   const mutation = useMutation({
@@ -81,7 +78,7 @@ export const LoginPage = () => {
     },
     onSuccess: (data, vars) => {
       console.log("login success", data);
-      navigate("/");
+      navigate("/dashboard");
     },
   });
 
@@ -89,11 +86,16 @@ export const LoginPage = () => {
     // console.log(vals, "<----VALUE");
     mutation.mutate(vals);
   };
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
 
-  return (
+  useEffect(() => {
+    if (user && token) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+
+  return loading ? (
+    <>Loading ..........</>
+  ) : (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
         <h1 className="text-2xl font-semibold text-gray-800 mb-2">
@@ -224,9 +226,14 @@ export const VerifyOTPPage = () => {
   }, [countdown]);
 
   useEffect(() => {
-    // focus first input on mount
     setTimeout(() => inputsRef.current[0]?.focus?.(), 80);
   }, []);
+
+  useEffect(() => {
+    if (user && token) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, token, navigate]);
 
   const handleChange = (idx, e) => {
     const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 1);

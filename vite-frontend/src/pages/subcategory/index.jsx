@@ -4,26 +4,30 @@ import { useSubcategories } from "../../hooks/useSubcategories";
 import SkeletonLoader from "../../components/SkeletonLoader";
 import DeleteModal from "../../components/DeleteModal";
 import CreateSubcategoryModal from "./modules/CreateSubcategoryModal";
+import Loader from "../../components/Loader";
 
 const SubCategoryPage = () => {
+  const [pageData, setPageData] = useState({
+    currentPage: 1,
+    total: 0,
+    totalPages: 0,
+    showing: 4,
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const {
     createSubcategory,
     deleteSubcategory,
     fetchSubcategories,
     updateSubcategory,
-  } = useSubcategories();
+  } = useSubcategories({
+    pagination: { page: pageData.currentPage, limit: pageData.showing },
+  });
 
   const [subCategories, setSubCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageData, setPageData] = useState({
-    currentPage: 1,
-    total: 0,
-    totalPages: 0,
-    showing: 0,
-  });
 
   const subCategoriesQuery = useQuery({
-    queryKey: ["sub-categories", searchTerm, pageData.currentPage],
+    queryKey: ["sub-categories", searchTerm, pageData.showing],
     queryFn: fetchSubcategories,
     keepPreviousData: true,
   });
@@ -44,16 +48,15 @@ const SubCategoryPage = () => {
 
   const createSubCategory = useMutation({
     mutationFn: (vals) => createSubcategory(vals),
-    onSuccess: () => subCategoriesQuery.refetch(),
+    // onSuccess: () => subCategoriesQuery.refetch(),
   });
   const updateSubCategory = useMutation({
     mutationFn: ({ _id, categoryData }) =>
-      updateSubcategory({ _id, ...categoryData }),
-    onSuccess: () => subCategoriesQuery.refetch(),
+      updateSubcategory({ _id, subcategoryData: categoryData }),
   });
   const deleteSubCategory = useMutation({
     mutationFn: (_id) => deleteSubcategory(_id),
-    onSuccess: () => subCategoriesQuery.refetch(),
+    // onSuccess: () => subCategoriesQuery.refetch(),
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,7 +64,6 @@ const SubCategoryPage = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
 
   const handleCreate = (data) => {
-    console.log(data, "<----DATA");
     createSubCategory.mutate(data, {
       onSuccess: () => setIsModalOpen(false),
     });
@@ -69,7 +71,7 @@ const SubCategoryPage = () => {
 
   const handleUpdate = (data) => {
     updateSubCategory.mutate(
-      { _id: editingCategory._id, categoryData: data },
+      { _id: currentProduct._id, categoryData: data },
       {
         onSuccess: () => setCurrentProduct(null),
       }
@@ -82,26 +84,53 @@ const SubCategoryPage = () => {
     });
   };
 
-  const handleMode = (mode, product) => {
-    setModalMode(mode);
+  const openDeleteModal = (product) => {
+    setModalMode("delete");
     setCurrentProduct(product);
-    setIsModalOpen(true);
   };
 
-  return (
+  const handleMode = (mode, product) => {
+    setIsLoading(true);
+    setCurrentProduct(product);
+    setTimeout(() => {
+      setModalMode(mode);
+      setIsModalOpen(true);
+      setIsLoading(false);
+    }, 2000);
+  };
+
+  const handleLoadMore = () => {
+    setPageData((prev) => ({
+      ...prev,
+      showing: prev.showing + 4,
+    }));
+  };
+
+  const handleShowLess = () => {
+    setPageData((prev) => ({
+      ...prev,
+      showing: 4,
+    }));
+  };
+
+  return isLoading ? (
+    <div className="flex justify-center items-center h-screen">
+      <Loader />
+    </div>
+  ) : (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Sub-Categories</h1>
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+          onClick={() => handleMode("create", null)}
+          className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
         >
           Add Sub-Category
         </button>
       </div>
 
       {subCategoriesQuery.isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-full mx-auto">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-white p-6 rounded-lg shadow">
               <SkeletonLoader className="h-6 w-3/4 mb-2" />
@@ -115,39 +144,63 @@ const SubCategoryPage = () => {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {subCategories?.map((subCategory) => (
-            <div
-              key={subCategory._id}
-              className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow"
-            >
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                {subCategory.name}
-              </h3>
-              <p className="text-gray-600 mb-2">{subCategory.description}</p>
+        <div className="flex flex-col items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-full mx-auto">
+            {subCategories?.map((subCategory) => (
+              <div
+                key={subCategory._id}
+                className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow"
+              >
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  {subCategory.name}
+                </h3>
+                <p className="text-gray-600 mb-2">{subCategory.description}</p>
 
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleMode("view", category)}
-                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                >
-                  View
-                </button>
-                <button
-                  onClick={() => handleMode("edit", category)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleMode("delete", category)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                >
-                  Delete
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleMode("view", subCategory)}
+                    className="cursor-pointer bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => handleMode("edit", subCategory)}
+                    className="cursor-pointer bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => openDeleteModal(subCategory)}
+                    className="cursor-pointer bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          {subCategories?.length === 0 ? (
+            <p className="mt-4 text-gray-600">No Sub-Categories found.</p>
+          ) : (
+            <>
+              <div className="mt-4 text-sm text-gray-600">
+                Showing {subCategories?.length} of {pageData.total}{" "}
+                Sub-Categories
+              </div>
+
+              <button
+                className="cursor-pointer mt-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-full transition-all 
+            duration-200 border border-transparent hover:border-blue-400 shadow-md hover:shadow-lg font-medium"
+                onClick={() => {
+                  pageData.showing >= pageData.total
+                    ? handleShowLess()
+                    : handleLoadMore();
+                }}
+              >
+                {pageData.showing >= pageData.total ? "Show Less" : "Load More"}
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -161,10 +214,10 @@ const SubCategoryPage = () => {
       />
 
       <DeleteModal
-        isOpen={!!modalMode === "delete"}
+        isOpen={modalMode === "delete"}
         itemName={currentProduct?.name}
         onConfirm={handleDelete}
-        onCancel={() => setCurrentProduct(null)}
+        onCancel={() => setModalMode(null)}
       />
     </div>
   );

@@ -43,9 +43,9 @@ const Sidebar = () => {
             <ul className="space-y-3">
               <li>
                 <Link
-                  to="/"
+                  to="/dashboard"
                   className={`block p-3 rounded-lg font-medium transition-all duration-200 ${
-                    isActive("/")
+                    isActive("/dashboard")
                       ? "bg-blue-600 text-white shadow-md"
                       : "hover:bg-blue-700/20 hover:text-blue-200"
                   }`}
@@ -58,7 +58,7 @@ const Sidebar = () => {
               <li>
                 <button
                   onClick={() => setCategoriesOpen(!categoriesOpen)}
-                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-blue-700/20 focus:outline-none transition-all duration-200"
+                  className="cursor-pointer w-full flex items-center justify-between p-3 rounded-lg hover:bg-blue-700/20 focus:outline-none transition-all duration-200"
                 >
                   <span className="font-medium">Categories</span>
                   {categoriesOpen ? (
