@@ -30,7 +30,6 @@ export function useSubcategories(options = {}) {
   };
 
   const createSubcategory = async (subcategoryData) => {
-    console.log(subcategoryData, "<----subcategoryData");
     const response = await apiRequest("/sub-category", {
       method: "POST",
       data: subcategoryData,

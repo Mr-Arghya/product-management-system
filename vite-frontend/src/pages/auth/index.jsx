@@ -77,13 +77,11 @@ export const LoginPage = () => {
       setError(null);
     },
     onSuccess: (data, vars) => {
-      console.log("login success", data);
       navigate("/dashboard");
     },
   });
 
   const onSubmit = (vals) => {
-    // console.log(vals, "<----VALUE");
     mutation.mutate(vals);
   };
 
@@ -118,6 +116,10 @@ export const LoginPage = () => {
               {...register("email", {
                 required: "Email is required",
                 minLength: { value: 3, message: "Please enter a valid value" },
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: "Please enter a valid email address",
+                },
               })}
               className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200 ${
                 errors.email ? "border-red-300" : "border-gray-200"
@@ -125,10 +127,11 @@ export const LoginPage = () => {
               placeholder="name@example.com"
               aria-invalid={errors.email ? "true" : "false"}
               aria-describedby={errors.email ? "email-error" : undefined}
-              type="text"
+              type="email"
             />
+
             {errors.email && (
-              <p id="email-error" className="text-xs text-red-600 mt-1">
+              <p id="email-error" className="mt-1 text-xs text-red-600">
                 {errors.email.message}
               </p>
             )}
@@ -175,18 +178,6 @@ export const LoginPage = () => {
             {mutation.isPending ? "Submitting..." : "Submit"}
           </button>
         </form>
-
-        <div className="mt-6 text-xs text-gray-400">
-          By continuing, you agree to our{" "}
-          <Link to="/terms" className="underline">
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link to="/privacy" className="underline">
-            Privacy Policy
-          </Link>
-          .
-        </div>
       </div>
     </div>
   );
@@ -261,7 +252,6 @@ export const VerifyOTPPage = () => {
       const next = Array(6).fill("");
       for (let i = 0; i < paste.length; i++) next[i] = paste[i];
       setValues(next);
-      // focus after pasted length
       setTimeout(
         () => inputsRef.current[Math.min(paste.length, 5)]?.focus(),
         20
@@ -280,7 +270,6 @@ export const VerifyOTPPage = () => {
     setIsSubmitting(true);
     try {
       await verifyOtp(otpToken, otpString);
-      // success -> navigate to app
       navigate("/dashboard");
     } catch (err) {
       setError(err.message || "Verification failed");
@@ -400,18 +389,3 @@ export const VerifyOTPPage = () => {
   );
 };
 
-/* -------------------------
-   How to use
-   -------------------------
-   - Add routes in your app (example using react-router-dom v6):
-
-     <Routes>
-       <Route path="/login" element={<LoginPage />} />
-       <Route path="/verify-otp" element={<VerifyOTPPage />} />
-       <Route path="/dashboard" element={<Dashboard />} />
-     </Routes>
-
-   - The fake API prints the OTP to the browser console (dev convenience).
-   - Replace fakeSendOTP/fakeVerifyOTP with your real backend calls.
-
-*/

@@ -96,7 +96,7 @@ const SubCategoryPage = () => {
       setModalMode(mode);
       setIsModalOpen(true);
       setIsLoading(false);
-    }, 2000);
+    }, 300);
   };
 
   const handleLoadMore = () => {

@@ -19,13 +19,6 @@ export function useProducts(options = {}) {
     queryParams.append("search_value", filters.search_value || "");
     delete filters.search_value;
 
-    // for (const [key, value] of Object.entries(filters)) {
-    //   if (value !== undefined && value !== null && value !== "") {
-    //     queryParams.append(key, value);
-    //   }
-    // }
-    // console.log("Fetching products with params:", queryParams.toString());
-
     const response = await apiRequest.get(
       `/products/?${queryParams.toString()}&filter=${JSON.stringify(filters)}`
     );

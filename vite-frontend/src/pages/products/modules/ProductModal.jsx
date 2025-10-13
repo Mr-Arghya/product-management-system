@@ -83,12 +83,6 @@ const ProductModal = ({
     (cat) => String(cat._id) === String(selectedCategoryId)
   );
 
-  useEffect(() => {
-    if (selectedCategoryId && mode !== "view") {
-      setValue("sub_category_id", "");
-    }
-  }, [selectedCategoryId, setValue, mode]);
-
   const handleClose = () => {
     reset();
     onClose && onClose();
@@ -324,7 +318,7 @@ const ProductModal = ({
                         : "border-gray-200"
                     } ${!selectedCategoryId ? "bg-gray-50" : ""}`}
                   >
-                    <option value="">
+                    <option value="" disabled>
                       {!selectedCategoryId
                         ? "Select category first"
                         : selectedCategory?.sub_categories?.length > 0

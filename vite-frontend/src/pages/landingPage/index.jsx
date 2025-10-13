@@ -13,30 +13,26 @@ const LandingPage = () => {
   const [visibleProducts, setVisibleProducts] = useState(8);
   const { fetchProductsForLanding } = useProducts();
 
-  const [products20, setProducts20] = useState([]);
+  const [products, setProducts] = useState([]);
 
-  // Fixed useQuery configuration
   const productsQuery = useQuery({
     queryKey: ["landing-products"],
     queryFn: fetchProductsForLanding,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     retry: 3,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Handle the data when query succeeds
   useEffect(() => {
     if (productsQuery.data && !productsQuery.isLoading) {
-      console.log("Landing products data:", productsQuery.data);
-      
-      // Handle different response structures
-      const products = productsQuery.data?.data?.products || 
-                      productsQuery.data?.products || 
-                      productsQuery.data || 
-                      [];
-      
-      setProducts20(products);
+      const products =
+        productsQuery.data?.data?.products ||
+        productsQuery.data?.products ||
+        productsQuery.data ||
+        [];
+
+      setProducts(products);
     }
   }, [productsQuery.data, productsQuery.isLoading]);
 
@@ -70,7 +66,7 @@ const LandingPage = () => {
   };
 
   const handleLoadMore = () => {
-    setVisibleProducts((prev) => Math.min(prev + 8, products20.length));
+    setVisibleProducts((prev) => Math.min(prev + 8, products.length));
   };
 
   const handleShowLess = () => {
@@ -97,12 +93,22 @@ const LandingPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 mb-4">
-            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-16 h-16 mx-auto"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
           <p className="text-gray-600 mb-4">Failed to load products</p>
-          <button 
+          <button
             onClick={() => productsQuery.refetch()}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
@@ -170,7 +176,7 @@ const LandingPage = () => {
                 />
               </svg>
               Login
-              <div className="absolute inset-0 rounded-xl bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+              <div className="cursor-pointer absolute inset-0 rounded-xl bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
             </button>
           </div>
         </div>
@@ -204,7 +210,7 @@ const LandingPage = () => {
           <div className="flex justify-center space-x-8 mb-12">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">
-                {products20.length}+
+                {products.length}+
               </div>
               <div className="text-sm text-gray-500">Products</div>
             </div>
@@ -236,28 +242,42 @@ const LandingPage = () => {
           </div>
 
           {/* Products Grid */}
-          {products20.length > 0 ? (
+          {products.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
-              {products20.slice(0, visibleProducts).map((product) => (
+              {products.slice(0, visibleProducts).map((product) => (
                 <LandingProductCard key={product._id} product={product} />
               ))}
             </div>
           ) : (
             <div className="text-center py-12">
               <div className="text-gray-400 mb-4">
-                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                <svg
+                  className="w-16 h-16 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                  />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No Products Found</h3>
-              <p className="text-gray-500">We're working on adding products. Please check back later!</p>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                No Products Found
+              </h3>
+              <p className="text-gray-500">
+                We're working on adding products. Please check back later!
+              </p>
             </div>
           )}
 
           {/* Load More / Show Less Button */}
-          {products20.length > 0 && (
+          {products.length > 0 && (
             <div className="text-center">
-              {visibleProducts < products20.length ? (
+              {visibleProducts < products.length ? (
                 <button
                   onClick={handleLoadMore}
                   className="group inline-flex items-center px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl shadow-lg hover:shadow-xl border border-gray-200 hover:border-blue-300 transform hover:-translate-y-1 transition-all duration-300 hover:bg-blue-50"
@@ -312,7 +332,7 @@ const LandingPage = () => {
 
           <button
             onClick={handleLoginClick}
-            className="group inline-flex items-center px-10 py-4 bg-white text-blue-600 font-bold rounded-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 transition-all duration-300 hover:bg-blue-50"
+            className="cursor-pointer group inline-flex items-center px-10 py-4 bg-white text-blue-600 font-bold rounded-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 transition-all duration-300 hover:bg-blue-50"
           >
             <svg
               className="w-6 h-6 mr-3 transition-transform group-hover:scale-110"
@@ -358,7 +378,7 @@ const LandingPage = () => {
           </p>
           <div className="border-t border-gray-800 pt-6">
             <p className="text-gray-500 text-sm">
-              © 2025 Product Management System. All rights reserved.
+              <div>© {new Date().getFullYear()} Arghya Dev</div>
             </p>
           </div>
         </div>

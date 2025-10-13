@@ -74,13 +74,11 @@ const CategoryModal = ({
 
       for (const file of files) {
         const res = await uploadFile(file);
-        console.log(res, "<----res from upload");
         const uploadedPath = res?.data?.files?.file?.path;
         if (uploadedPath) uploadedUrls.push(uploadedPath);
       }
 
       const newUrls = [...localImages, ...uploadedUrls];
-      console.log(newUrls, "<----newUrls");
       setValue("images", newUrls);
     } catch (err) {
       console.error("File upload failed:", err);
