@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useUpload } from "../../../hooks/useUpload";
 import { X } from "lucide-react";
@@ -47,20 +47,11 @@ const ProductModal = ({
     }
   }, [categoriesQuery.data, categoriesQuery.isLoading]);
 
-  // Fixed: Better product data population for view/edit mode
   useEffect(() => {
     if (product && categories.length > 0) {
-      // Find the actual category and subcategory IDs
+      console.log("Product data changed:", product.sub_category_id);
       let categoryId = product.category || product.categories;
-      let subcategoryId = product.subcategory || product.sub_category_id;
-
-      // If we have Category/SubCategory objects instead of IDs, extract the IDs
-      if (typeof product.Category === "object" && product.Category?._id) {
-        categoryId = product.Category._id;
-      }
-      if (typeof product.SubCategory === "object" && product.SubCategory?._id) {
-        subcategoryId = product.SubCategory._id;
-      }
+      let subcategoryId = product.sub_category_id;
 
       reset({
         name: product.name || "",
@@ -71,7 +62,6 @@ const ProductModal = ({
         image: product.image ? product.image : [],
       });
     } else if (product && categories.length === 0) {
-      // If categories haven't loaded yet, populate without category data
       reset({
         name: product.name || "",
         description: product.description || "",
@@ -84,8 +74,6 @@ const ProductModal = ({
   }, [product, categories, reset]);
 
   const { uploadFile } = useUpload();
-  const overlayRef = useRef(null);
-  const nameRef = useRef(null);
   const [uploading, setUploading] = useState(false);
 
   const selectedCategoryId = watch("categories");
@@ -95,32 +83,15 @@ const ProductModal = ({
     (cat) => String(cat._id) === String(selectedCategoryId)
   );
 
-  // Clear subcategory when category changes (only in create/edit mode)
   useEffect(() => {
     if (selectedCategoryId && mode !== "view") {
       setValue("sub_category_id", "");
     }
   }, [selectedCategoryId, setValue, mode]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      reset();
-      return;
-    }
-    setTimeout(() => nameRef.current?.focus(), 50);
-
-    const onKey = (e) => e.key === "Escape" && handleClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [isOpen]);
-
   const handleClose = () => {
     reset();
     onClose && onClose();
-  };
-
-  const handleOverlayClick = (e) => {
-    if (e.target === overlayRef.current) handleClose();
   };
 
   const handleFileUpload = async (event) => {
@@ -164,10 +135,8 @@ const ProductModal = ({
     handleClose();
   };
 
-  // Get display names for view mode
   const getCategoryDisplayName = () => {
     if (mode === "view" && product) {
-      // Try multiple ways to get the category name
       if (product.Category?.name) return product.Category.name;
       if (selectedCategory?.name) return selectedCategory.name;
       return "Unknown Category";
@@ -193,8 +162,6 @@ const ProductModal = ({
 
   return (
     <div
-      ref={overlayRef}
-      onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -227,7 +194,6 @@ const ProductModal = ({
               </label>
               <input
                 id="name"
-                ref={nameRef}
                 {...register("name", {
                   required: mode !== "view" ? "Name is required" : false,
                   minLength:
@@ -340,7 +306,7 @@ const ProductModal = ({
               {/* Subcategory */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Subcategory
+                  Sub-Category
                 </label>
                 {mode === "view" ? (
                   <div className="block w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">

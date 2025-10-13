@@ -6,24 +6,26 @@ import DeleteModal from "../../components/DeleteModal";
 import CreateCategoryModal from "./modules/CreateCategoryModal";
 
 const CategoryPage = () => {
+  const [pageData, setPageData] = useState({
+    currentPage: 1,
+    total: 0,
+    totalPages: 0,
+    showing: 3,
+  });
   const {
     createCategories,
     deleteCategories,
     fetchCategories,
     updateCategories,
-  } = useCategories();
+  } = useCategories({
+    pagination: { page: pageData.currentPage, limit: pageData.showing },
+  });
 
   const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageData, setPageData] = useState({
-    currentPage: 1,
-    total: 0,
-    totalPages: 0,
-    showing: 0,
-  });
 
   const categoriesQuery = useQuery({
-    queryKey: ["categories", searchTerm, pageData.currentPage],
+    queryKey: ["categories", searchTerm, pageData.showing],
     queryFn: fetchCategories,
     keepPreviousData: true,
   });
@@ -60,7 +62,6 @@ const CategoryPage = () => {
   const [modalMode, setModalMode] = useState("create");
   const [currentProduct, setCurrentProduct] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  // modalKey forces CreateCategoryModal to remount so internal form is reset
   const [modalKey, setModalKey] = useState(0);
 
   const handleCreate = (data) => {
@@ -95,7 +96,6 @@ const CategoryPage = () => {
   };
 
   const handleMode = (mode, product) => {
-    // Open delete modal separately
     if (mode === "delete") {
       setCurrentProduct(product);
       setModalMode("delete");
@@ -104,7 +104,6 @@ const CategoryPage = () => {
     }
 
     if (mode === "create") {
-      // clear previous product and force modal remount so the form is empty
       setCurrentProduct(null);
       setModalMode("create");
       setModalKey((k) => k + 1);
@@ -112,12 +111,24 @@ const CategoryPage = () => {
       return;
     }
 
-    // view / edit
     setCurrentProduct(product);
     setModalMode(mode);
-    // ensure modal remount when editing a different product
     setModalKey((k) => k + 1);
     setIsModalOpen(true);
+  };
+
+  const handleLoadMore = () => {
+    setPageData((prev) => ({
+      ...prev,
+      showing: prev.showing + 3,
+    }));
+  };
+
+  const handleShowLess = () => {
+    setPageData((prev) => ({
+      ...prev,
+      showing: 3,
+    }));
   };
 
   return (
@@ -147,45 +158,68 @@ const CategoryPage = () => {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories?.map((category) => (
-            <div
-              key={category._id}
-              className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow"
-            >
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                {category.name}
-              </h3>
-              <p className="text-gray-600 mb-2">{category.description}</p>
-              <p className="text-sm text-gray-500 mb-4">
-                Sub-Category:{" "}
-                {category?.sub_categories.length > 0
-                  ? category?.sub_categories.map((sub) => sub.name).join(", ")
-                  : "None"}{" "}
-                (Total: {category?.sub_categories.length || 0})
-              </p>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleMode("view", category)}
-                  className="cursor-pointer bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                >
-                  View
-                </button>
-                <button
-                  onClick={() => handleMode("edit", category)}
-                  className="cursor-pointer bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleMode("delete", category)}
-                  className="cursor-pointer bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                >
-                  Delete
-                </button>
+        <div className="flex flex-col items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {categories?.map((category) => (
+              <div
+                key={category._id}
+                className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow"
+              >
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  {category.name}
+                </h3>
+                <p className="text-gray-600 mb-2">{category.description}</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  Sub-Category:{" "}
+                  {category?.sub_categories.length > 0
+                    ? category?.sub_categories.map((sub) => sub.name).join(", ")
+                    : "None"}{" "}
+                  (Total: {category?.sub_categories.length || 0})
+                </p>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleMode("view", category)}
+                    className="cursor-pointer bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => handleMode("edit", category)}
+                    className="cursor-pointer bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleMode("delete", category)}
+                    className="cursor-pointer bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          {categories?.length === 0 ? (
+            <p className="mt-4 text-gray-600">No Categories found.</p>
+          ) : (
+            <>
+              <div className="mt-4 text-sm text-gray-600">
+                Showing {categories?.length} of {pageData.total} Categories
+              </div>
+
+              <button
+                className="cursor-pointer mt-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-full transition-all 
+            duration-200 border border-transparent hover:border-blue-400 shadow-md hover:shadow-lg font-medium"
+                onClick={() => {
+                  pageData.showing >= pageData.total
+                    ? handleShowLess()
+                    : handleLoadMore();
+                }}
+              >
+                {pageData.showing >= pageData.total ? "Show Less" : "Load More"}
+              </button>
+            </>
+          )}
         </div>
       )}
 
